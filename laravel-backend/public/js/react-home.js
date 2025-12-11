@@ -23,6 +23,34 @@
       ])
     )
 
+  const FeatureCard = ({ title, text }) =>
+    h('div', { className: 'card' }, [
+      h('h3', { className: 'card-title' }, title),
+      h('p', { className: 'card-text' }, text),
+    ])
+
+  const HowStep = ({ badge, title, text }) =>
+    h('div', { className: 'card' }, [
+      h('div', { className: 'btn-ghost', style: { width: 'fit-content', marginBottom: '8px' } }, badge),
+      h('h3', { className: 'card-title' }, title),
+      h('p', { className: 'card-text' }, text),
+    ])
+
+  const CTA = () =>
+    h('div', { className: 'hero', style: { marginTop: '2rem' } },
+      h('div', { className: 'hero-content' }, [
+        h('p', { className: 'hero-kicker' }, 'SaaS / Abonnement'),
+        h('h2', { className: 'hero-title', style: { fontSize: '30px', marginBottom: '10px' } },
+          'Ouvre ta boutique en quelques clics'),
+        h('p', { className: 'hero-subtitle' },
+          'Abonnement mensuel, produits, commandes, paiement Visa, dashboard admin.'),
+        h('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap' } }, [
+          h('a', { href: '/register', className: 'btn-primary accent' }, 'Créer mon compte'),
+          h('a', { href: '/products', className: 'btn-ghost' }, 'Voir les produits'),
+        ]),
+      ])
+    )
+
   const ProductCard = ({ product }) =>
     h('div', { className: 'card' }, [
       h('h3', { className: 'card-title' }, product.name),
@@ -43,12 +71,25 @@
   const Home = () =>
     h(React.Fragment, null, [
       h(Hero),
+      h('h2', { className: 'section-title' }, 'Pourquoi notre plateforme ?'),
+      h('div', { className: 'grid' }, [
+        h(FeatureCard, { title: 'Automatisation', text: 'Paiement, commandes fournisseur, notifications — tout roule en automatique.' }),
+        h(FeatureCard, { title: 'Adapté Afrique', text: 'Passerelles Visa compatibles (Korapay/DPO), multi-devises, mobile-friendly.' }),
+        h(FeatureCard, { title: 'SaaS multi-boutiques', text: 'Chaque marchand a son espace, ses produits, ses commandes, son lien de boutique.' }),
+      ]),
+      h('h2', { className: 'section-title', style: { marginTop: '2rem' } }, 'Comment ça marche ?'),
+      h('div', { className: 'grid' }, [
+        h(HowStep, { badge: 'Étape 1', title: 'Client paie sur ta boutique', text: 'Paiement Visa sécurisé, panier simple.' }),
+        h(HowStep, { badge: 'Étape 2', title: 'Commande transmise', text: 'Envoi auto au fournisseur (AliExpress/CJ ou local).' }),
+        h(HowStep, { badge: 'Étape 3', title: 'Fournisseur expédie', text: 'Tu gardes ta marge, le fournisseur reçoit son prix.' }),
+      ]),
       h('h2', { className: 'section-title' }, 'Produits populaires'),
       products.length === 0
         ? h('p', { className: 'text-gray-600 col-span-full text-center' }, 'Aucun produit pour le moment.')
         : h('div', { className: 'grid' },
             products.map((p) => h(ProductCard, { key: p.id, product: p }))
-          )
+          ),
+      h(CTA),
     ])
 
   const root = createRoot(rootEl)
