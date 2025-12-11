@@ -1,0 +1,25 @@
+# Root ignore
+/node_modules
+/.next
+/out
+/build
+/.vercel
+*.log
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+
+# Coverage
+/coverage
+
