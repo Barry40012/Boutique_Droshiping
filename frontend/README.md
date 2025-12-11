@@ -13,6 +13,8 @@ npm install
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 NEXT_PUBLIC_FACEBOOK_PIXEL_ID=your_pixel_id
+NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxx
 ```
 
 2. Lancer le serveur :

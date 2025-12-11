@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCartStore } from '@/store/cartStore'
 import { ShoppingCart } from 'lucide-react'
+import { UserMenu } from '@/components/auth/UserMenu'
 
 export function Header() {
   const itemCount = useCartStore((state) => state.getItemCount())
@@ -30,6 +31,7 @@ export function Header() {
             <Link href="/admin" className="hover:text-primary transition-colors">
               Admin
             </Link>
+            <UserMenu />
           </nav>
         </div>
       </div>
