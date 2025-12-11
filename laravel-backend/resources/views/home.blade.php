@@ -8,7 +8,7 @@
             <p class="hero-kicker">Dropshipping automatisé</p>
             <h1 class="hero-title">Lance ta boutique en quelques minutes</h1>
             <p class="hero-subtitle">Paiement carte, automatisation fournisseur, dashboard admin. Tout est prêt.</p>
-            <a href="{{ url('/products') }}" class="btn-primary">
+            <a href="{{ url('/products') }}" class="btn-primary accent">
                 Voir tous les produits
             </a>
         </div>
