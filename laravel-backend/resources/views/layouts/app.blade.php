@@ -7,14 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #1d4ed8; /* bleu */
-            --secondary: #f97316; /* orange */
-            --dark: #0f172a; /* noir bleuté */
-        }
-    </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50" style="font-family: 'Inter', sans-serif;">
     <header class="bg-white border-b shadow-sm">
