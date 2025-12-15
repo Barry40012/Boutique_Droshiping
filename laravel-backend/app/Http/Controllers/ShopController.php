@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Store;
+use App\Services\AutomationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -13,14 +15,39 @@ class ShopController extends Controller
 {
     public function home()
     {
-        $products = Product::orderByDesc('created_at')->limit(9)->get();
+        try {
+            $products = Product::orderByDesc('created_at')->limit(9)->get();
+        } catch (\Exception $e) {
+            // En cas d'erreur de connexion, retourner un tableau vide
+            \Log::error('Erreur connexion DB: ' . $e->getMessage());
+            $products = collect([]);
+        }
         return view('home', compact('products'));
     }
 
     public function products()
     {
-        $products = Product::orderByDesc('created_at')->paginate(12);
-        return view('products.index', compact('products'));
+        try {
+            $products = Product::orderByDesc('created_at')->paginate(12);
+            $pagination = [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+                'links' => $products->linkCollection()->toArray()
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Erreur connexion DB: ' . $e->getMessage());
+            $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12, 1);
+            $pagination = [
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => 12,
+                'total' => 0,
+                'links' => []
+            ];
+        }
+        return view('products.index', compact('products', 'pagination'));
     }
 
     public function productShow(string $id)
@@ -57,7 +84,22 @@ class ShopController extends Controller
             return $carry + $item['product']->selling_price * $item['quantity'];
         }, 0);
 
-        return view('cart.index', compact('cart', 'total'));
+        // Convertir les objets Product en tableaux pour JSON
+        $cartArray = [];
+        foreach ($cart as $productId => $item) {
+            $cartArray[$productId] = [
+                'product' => [
+                    'id' => $item['product']->id,
+                    'name' => $item['product']->name,
+                    'description' => $item['product']->description,
+                    'selling_price' => $item['product']->selling_price,
+                    'images' => $item['product']->images ?? [],
+                ],
+                'quantity' => $item['quantity']
+            ];
+        }
+
+        return view('cart.index', compact('cart', 'total', 'cartArray'));
     }
 
     public function updateCart(Request $request, string $id)
@@ -88,7 +130,22 @@ class ShopController extends Controller
             return $carry + $item['product']->selling_price * $item['quantity'];
         }, 0);
 
-        return view('checkout.index', compact('cart', 'total'));
+        // Convertir les objets Product en tableaux pour JSON
+        $cartArray = [];
+        foreach ($cart as $productId => $item) {
+            $cartArray[$productId] = [
+                'product' => [
+                    'id' => $item['product']->id,
+                    'name' => $item['product']->name,
+                    'description' => $item['product']->description,
+                    'selling_price' => $item['product']->selling_price,
+                    'images' => $item['product']->images ?? [],
+                ],
+                'quantity' => $item['quantity']
+            ];
+        }
+
+        return view('checkout.index', compact('cart', 'total', 'cartArray'));
     }
 
     public function checkoutSubmit(Request $request)
@@ -105,6 +162,13 @@ class ShopController extends Controller
             'city' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'postalCode' => 'required|string|max:50',
+        ], [
+            'name.required' => 'Le nom est requis.',
+            'phone.required' => 'Le téléphone est requis.',
+            'street.required' => 'L\'adresse est requise.',
+            'city.required' => 'La ville est requise.',
+            'country.required' => 'Le pays est requis.',
+            'postalCode.required' => 'Le code postal est requis.',
         ]);
 
         $total = collect($cart)->reduce(function ($carry, $item) {
@@ -125,13 +189,19 @@ class ShopController extends Controller
 
             $supplierCost = 0;
             $margin = 0;
+            $storeId = null;
             foreach ($cart as $item) {
                 $supplierCost += $item['product']->supplier_price * $item['quantity'];
                 $margin += ($item['product']->selling_price - $item['product']->supplier_price) * $item['quantity'];
+                // Récupérer le store_id du premier produit
+                if (!$storeId && $item['product']->store_id) {
+                    $storeId = $item['product']->store_id;
+                }
             }
 
             Order::create([
                 'id' => $orderId,
+                'store_id' => $storeId,
                 'total_amount' => $total,
                 'supplier_cost' => $supplierCost,
                 'margin' => $margin,
@@ -160,6 +230,68 @@ class ShopController extends Controller
     public function checkoutSuccess()
     {
         return view('checkout.success');
+    }
+
+    /**
+     * Vue publique d'une boutique merchant
+     */
+    public function storePublic(string $slug)
+    {
+        // Utiliser whereRaw pour PostgreSQL boolean
+        if (config('database.default') === 'pgsql') {
+            $store = Store::where('slug', $slug)
+                ->whereRaw('is_active::boolean = true')
+                ->firstOrFail();
+        } else {
+            $store = Store::where('slug', $slug)
+                ->where('is_active', '=', true)
+                ->firstOrFail();
+        }
+
+        $products = Product::where('store_id', $store->id)
+            ->where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
+
+        $template = $store->template;
+        $templateSlug = $template ? $template->slug : 'classic';
+
+        return view("store.templates.{$templateSlug}", compact('store', 'products'));
+    }
+
+    /**
+     * Vue d'un produit individuel dans une boutique merchant
+     */
+    public function storeProductShow(string $slug, string $id)
+    {
+        // Récupérer la boutique
+        if (config('database.default') === 'pgsql') {
+            $store = Store::where('slug', $slug)
+                ->whereRaw('is_active::boolean = true')
+                ->firstOrFail();
+        } else {
+            $store = Store::where('slug', $slug)
+                ->where('is_active', '=', true)
+                ->firstOrFail();
+        }
+
+        // Récupérer le produit de cette boutique
+        // Permettre de voir même les produits inactifs (pour prévisualisation depuis le dashboard)
+        $product = Product::where('store_id', $store->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $template = $store->template;
+        $templateSlug = $template ? $template->slug : 'classic';
+
+        // Utiliser le template de la boutique directement pour que le produit s'affiche
+        // dans le même thème que la boutique principale
+        // Passer le produit unique dans une collection pour compatibilité avec les templates
+        return view("store.templates.{$templateSlug}", [
+            'store' => $store,
+            'product' => $product, // Produit unique pour les templates qui le détectent
+            'products' => collect([$product]) // Collection pour compatibilité avec les templates existants
+        ]);
     }
 }
 

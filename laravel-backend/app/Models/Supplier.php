@@ -4,27 +4,64 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Supplier extends Model
 {
     use HasFactory;
 
     protected $table = 'suppliers';
-    public $incrementing = false;
-    protected $keyType = 'string';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
-        'id',
         'name',
-        'api_type',
+        'slug',
+        'type',
+        'description',
+        'api_endpoint',
         'api_key',
         'api_secret',
-        'wallet_balance',
-        'status',
+        'api_config',
+        'is_active',
+        'auto_fulfill',
     ];
 
     protected $casts = [
-        'wallet_balance' => 'float',
+        'api_config' => 'array',
+        'is_active' => 'boolean',
+        'auto_fulfill' => 'boolean',
     ];
-}
 
+    // Relations
+    public function wallets()
+    {
+        return $this->hasMany(SupplierWallet::class);
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        if (config('database.default') === 'pgsql') {
+            return $query->whereRaw('is_active::boolean = true');
+        }
+        return $query->where('is_active', true);
+    }
+
+    // Générer le slug automatiquement
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($supplier) {
+            if (empty($supplier->slug)) {
+                $supplier->slug = Str::slug($supplier->name);
+            }
+        });
+    }
+}

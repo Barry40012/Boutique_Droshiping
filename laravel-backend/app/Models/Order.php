@@ -15,6 +15,7 @@ class Order extends Model
 
     protected $fillable = [
         'id',
+        'store_id',
         'customer_id',
         'total_amount',
         'supplier_cost',
@@ -27,6 +28,12 @@ class Order extends Model
         'tracking_number',
     ];
 
+    // Relations
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
     protected $casts = [
         'total_amount' => 'float',
         'supplier_cost' => 'float',
@@ -37,6 +44,11 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
+    public function supplierTransactions()
+    {
+        return $this->hasMany(SupplierTransaction::class);
     }
 }
 

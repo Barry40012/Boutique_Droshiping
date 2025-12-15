@@ -26,7 +26,16 @@ class WebAuthController extends Controller
         }
 
         $request->session()->regenerate();
-        return redirect()->intended('/admin');
+        
+        $user = Auth::user();
+        
+        // Si l'utilisateur a une boutique, rediriger vers le dashboard marchand
+        if ($user->store) {
+            return redirect()->intended('/merchant/dashboard');
+        }
+        
+        // Sinon, rediriger vers le questionnaire pour créer une boutique
+        return redirect()->intended('/merchant/store/questionnaire');
     }
 
     public function logout(Request $request)
@@ -58,7 +67,8 @@ class WebAuthController extends Controller
 
         Auth::login($user);
 
-        return redirect('/admin');
+        // Rediriger vers le questionnaire pour créer une boutique
+        return redirect('/merchant/store/questionnaire');
     }
 }
 

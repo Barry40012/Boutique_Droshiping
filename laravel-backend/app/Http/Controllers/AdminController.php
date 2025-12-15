@@ -3,14 +3,25 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
-        $orders = DB::table('orders')->get();
-        $products = DB::table('products')->get();
-        $suppliers = DB::table('suppliers')->get();
+        $store = Auth::user()?->store;
+        
+        try {
+            $orders = DB::table('orders')->get();
+            $products = DB::table('products')->get();
+            $suppliers = DB::table('suppliers')->get();
+        } catch (\Exception $e) {
+            // En cas d'erreur de connexion, utiliser des collections vides
+            \Log::error('Erreur connexion DB: ' . $e->getMessage());
+            $orders = collect([]);
+            $products = collect([]);
+            $suppliers = collect([]);
+        }
 
         $stats = [
             'revenue' => [
@@ -32,7 +43,7 @@ class AdminController extends Controller
             ],
         ];
 
-        return view('admin.dashboard', compact('stats'));
+        return view('admin.dashboard', compact('stats', 'store'));
     }
 
     public function products()
