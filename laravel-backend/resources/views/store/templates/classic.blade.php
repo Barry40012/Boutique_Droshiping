@@ -17,6 +17,18 @@
     $btnText = $store->button_text ?? 'Acheter maintenant';
     $btnAnim = $store->button_animation ?? 'none';
     $btnClass = $btnAnim !== 'none' ? ' btn-anim-'.$btnAnim : '';
+    
+    // Personnalisation header (partagée entre tous les thèmes)
+    $headerBgColor = $store->header_bg_color ?? '#ffffff';
+    $headerTextColor = $store->header_text_color ?? '#4b5563';
+    $headerNameColor = $store->header_name_color ?? '#1f2937';
+    $headerNameFont = $store->header_name_font ?? 'inherit';
+    
+    // Personnalisation footer (partagée entre tous les thèmes)
+    $footerBgColor = $store->footer_bg_color ?? '#1f2937';
+    $footerTextColor = $store->footer_text_color ?? '#9ca3af';
+    $footerLinkColor = $store->footer_link_color ?? '#ffffff';
+    $footerTitleColor = $store->footer_title_color ?? '#ffffff';
 @endphp
 <div class="store-public-page classic-template">
     <!-- Header de la boutique -->
@@ -229,28 +241,28 @@
     @endif
 
     <!-- Footer -->
-    <footer class="store-footer">
+    <footer class="store-footer" style="background: {{ $footerBgColor }}; color: {{ $footerTextColor }};">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>{{ $store->name }}</h3>
-                    <p>{{ $store->description ?? 'Votre boutique de confiance' }}</p>
+                    <h3 style="color: {{ $footerTitleColor }};">{{ $store->name }}</h3>
+                    <p style="color: {{ $footerTextColor }};">{{ $store->description ?? 'Votre boutique de confiance' }}</p>
                 </div>
                 <div class="footer-section">
-                    <h4>Liens rapides</h4>
+                    <h4 style="color: {{ $footerTitleColor }};">Liens rapides</h4>
                 <ul>
-                    @if($showHome)<li><a href="#products">Accueil</a></li>@endif
-                    @if($showProduct)<li><a href="#products">Produits</a></li>@endif
-                    @if($showAboutSection)<li><a href="#about">À propos</a></li>@endif
-                    @if($showFaqSection)<li><a href="#faq">FAQ</a></li>@endif
+                    @if($showHome)<li><a href="#products" style="color: {{ $footerLinkColor }};">Accueil</a></li>@endif
+                    @if($showProduct)<li><a href="#products" style="color: {{ $footerLinkColor }};">Produits</a></li>@endif
+                    @if($showAboutSection)<li><a href="#about" style="color: {{ $footerLinkColor }};">À propos</a></li>@endif
+                    @if($showFaqSection)<li><a href="#faq" style="color: {{ $footerLinkColor }};">FAQ</a></li>@endif
                 </ul>
                 </div>
                 <div class="footer-section">
-                    <h4>Contact</h4>
-                    <p>Email: {{ $footerEmail }}</p>
+                    <h4 style="color: {{ $footerTitleColor }};">Contact</h4>
+                    <p style="color: {{ $footerTextColor }};">Email: {{ $footerEmail }}</p>
                 </div>
             </div>
-            <div class="footer-bottom">
+            <div class="footer-bottom" style="color: {{ $footerTextColor }};">
                 <p>&copy; {{ date('Y') }} {{ $store->name }}. Tous droits réservés.</p>
             </div>
         </div>

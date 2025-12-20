@@ -30,8 +30,8 @@ Route::get('/products', [ShopController::class, 'products']);
 Route::get('/products/{id}', [ShopController::class, 'productShow'])->name('products.show');
 Route::post('/cart/add/{id}', [ShopController::class, 'addToCart'])->name('cart.add');
 Route::get('/cart', [ShopController::class, 'cart'])->name('cart');
-Route::post('/cart/update/{id}', [ShopController::class, 'updateCart']);
-Route::post('/cart/remove/{id}', [ShopController::class, 'removeFromCart']);
+Route::post('/cart/update/{id}', [ShopController::class, 'updateCart'])->name('cart.update');
+Route::post('/cart/remove/{id}', [ShopController::class, 'removeFromCart'])->name('cart.remove');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('checkout');
 Route::post('/checkout', [ShopController::class, 'checkoutSubmit'])->name('checkout.submit');
 Route::get('/checkout/success', [ShopController::class, 'checkoutSuccess'])->name('checkout.success');
@@ -42,6 +42,16 @@ Route::post('/webhooks/payment', [ShopController::class, 'paymentWebhook'])->nam
 // Boutiques publiques des merchants
 Route::get('/store/{slug}', [ShopController::class, 'storePublic'])->name('store.public');
 Route::get('/store/{slug}/products/{id}', [ShopController::class, 'storeProductShow'])->name('store.product.show');
+
+// Route publique pour changer la langue d'une boutique
+Route::post('/store/{slug}/language', [ShopController::class, 'updateLanguage'])->name('store.language.update');
+
+// Suivi de commande (public)
+Route::get('/track-order', [ShopController::class, 'showTrackOrder'])->name('track.order');
+Route::post('/track-order', [ShopController::class, 'trackOrder'])->name('track.order.submit');
+
+// Avis produits (public)
+Route::post('/store/{slug}/products/{id}/review', [ShopController::class, 'submitReview'])->name('product.review.submit');
 
 // Admin (protégé) - Administrateur de la plateforme uniquement
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -55,6 +65,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::middleware('auth')->prefix('merchant')->name('merchant.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [MerchantController::class, 'dashboard'])->name('dashboard');
+    Route::get('/subscription', [MerchantController::class, 'subscription'])->name('subscription');
     Route::get('/subscription/required', [MerchantController::class, 'subscriptionRequired'])->name('subscription.required');
     
     // Création de boutique

@@ -144,6 +144,7 @@
         @yield('content')
     </main>
 
+    @if(!$isPublicStore)
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -204,6 +205,7 @@
             </div>
         </div>
     </footer>
+    @endif
 
     <!-- AOS Animation Library JS -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>

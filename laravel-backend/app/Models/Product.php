@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
@@ -28,6 +29,23 @@ class Product extends Model
         'supplier_link',
         'supplier_store_link',
         'status',
+        'variants',
+        'has_promotion',
+        'promo_price',
+        'promo_start_date',
+        'promo_end_date',
+    ];
+
+    protected $casts = [
+        // 'images' => 'array', // Désactivé car on utilise un accessor personnalisé pour PostgreSQL TEXT[]
+        'supplier_price' => 'float',
+        'selling_price' => 'float',
+        'margin' => 'float',
+        'variants' => 'array',
+        'has_promotion' => 'boolean',
+        'promo_price' => 'decimal:2',
+        'promo_start_date' => 'datetime',
+        'promo_end_date' => 'datetime',
     ];
 
     // Relations
@@ -41,131 +59,66 @@ class Product extends Model
         return $this->belongsTo(Supplier::class);
     }
 
-    protected $casts = [
-        // 'images' => 'array', // Désactivé car on utilise un accessor personnalisé pour PostgreSQL TEXT[]
-        'supplier_price' => 'float',
-        'selling_price' => 'float',
-        'margin' => 'float',
-    ];
+    public function reviews()
+    {
+        // Pour PostgreSQL, utiliser whereRaw pour comparer correctement le boolean
+        if (config('database.default') === 'pgsql') {
+            return $this->hasMany(ProductReview::class)
+                ->whereRaw('is_approved::boolean = true')
+                ->orderBy('created_at', 'desc');
+        } else {
+            return $this->hasMany(ProductReview::class)
+                ->where('is_approved', true)
+                ->orderBy('created_at', 'desc');
+        }
+    }
 
     /**
-     * Accessor pour convertir PostgreSQL TEXT[] en tableau PHP
+     * Relation avec ProductImage (table séparée - APPROCHE PRO)
+     */
+    public function productImages()
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order', 'asc');
+    }
+
+    /**
+     * Accessor pour compatibilité: retourner les images depuis product_images
+     * (remplace l'ancien accessor qui utilisait la colonne images TEXT[])
      */
     public function getImagesAttribute($value)
     {
-        // Récupérer la valeur brute depuis les attributs
-        // Laravel peut passer la valeur directement ou elle peut être dans $this->attributes
-        $rawValue = $value;
-        
-        // Si $value est null, essayer de récupérer depuis les attributs
-        if ($rawValue === null && array_key_exists('images', $this->attributes)) {
-            $rawValue = $this->attributes['images'];
+        // ✅ APPROCHE PRO: Utiliser la table product_images
+        // Si la relation est déjà chargée, l'utiliser (plus performant)
+        if ($this->relationLoaded('productImages')) {
+            return $this->productImages->pluck('image_url')->filter()->values()->toArray();
         }
         
-        // Si toujours null ou vide, retourner un tableau vide
-        if ($rawValue === null || $rawValue === '' || $rawValue === '{}') {
-            return [];
-        }
-        
-        // Si c'est déjà un tableau, le retourner tel quel (filtré)
-        if (is_array($rawValue)) {
-            return array_values(array_filter($rawValue, function($img) {
-                return !empty($img) && is_string($img);
-            }));
-        }
-        
-        // Si c'est une chaîne, essayer de la parser
-        if (is_string($rawValue)) {
-            // Format PostgreSQL TEXT[]: {val1,val2} ou {"val1","val2"}
-            if (preg_match('/^\{.*\}$/', $rawValue)) {
-                // Enlever les accolades
-                $content = trim($rawValue, '{}');
-                if (empty($content)) {
-                    return [];
-                }
-                
-                // Séparer par virgule (en faisant attention aux virgules dans les URLs)
-                // Utiliser une regex pour séparer correctement
-                preg_match_all('/"((?:[^"\\\\]|\\\\.)*)"|([^,]+)/', $content, $matches);
-                $items = [];
-                foreach ($matches[0] as $match) {
-                    if (!empty(trim($match))) {
-                        $items[] = trim($match, '"');
-                    }
-                }
-                
-                // Si la méthode regex n'a pas fonctionné, utiliser explode simple
-                if (empty($items)) {
-                    $items = explode(',', $content);
-                    $items = array_map(function($item) {
-                        $item = trim($item);
-                        $item = trim($item, '"');
-                        $item = str_replace('\\"', '"', $item);
-                        $item = str_replace('\\\\', '\\', $item);
-                        return $item;
-                    }, $items);
-                }
-                
-                // Filtrer les valeurs vides
-                return array_values(array_filter($items, function($img) {
-                    return !empty($img) && is_string($img);
-                }));
-            }
-            
-            // Si c'est du JSON (fallback)
-            if (($decoded = json_decode($rawValue, true)) !== null && is_array($decoded)) {
-                return array_values(array_filter($decoded, function($img) {
-                    return !empty($img) && is_string($img);
-                }));
-            }
-        }
-        
-        return [];
+        // Sinon, charger depuis la relation (requête DB)
+        return $this->productImages()->pluck('image_url')->filter()->values()->toArray();
     }
 
     /**
      * Préparer les attributs avant l'insertion/mise à jour
-     * Pour PostgreSQL TEXT[], on doit convertir le tableau PHP en format PostgreSQL
+     * Note: Les images sont maintenant gérées via la table product_images (approche PRO)
+     * On garde juste la conversion de has_promotion pour PostgreSQL
      */
     protected static function boot()
     {
         parent::boot();
 
         static::saving(function ($product) {
-            // Convertir le tableau PHP en format PostgreSQL TEXT[]
-            // Format PostgreSQL: {} pour vide, {val1,val2} pour tableau avec valeurs
-            
-            // Récupérer la valeur depuis les attributs si elle existe
-            $imagesValue = $product->getAttributes()['images'] ?? $product->images ?? null;
-            
-            // Debug
-            \Log::info('Product saving - Images conversion', [
-                'product_id' => $product->id ?? 'new',
-                'images_type' => gettype($imagesValue),
-                'images_value' => is_array($imagesValue) ? $imagesValue : (is_string($imagesValue) ? substr($imagesValue, 0, 200) : $imagesValue),
-                'is_array' => is_array($imagesValue),
-                'is_empty' => empty($imagesValue)
-            ]);
-            
-            if (is_array($imagesValue)) {
-                if (empty($imagesValue)) {
-                    $product->setAttribute('images', '{}');
-                } else {
-                    // Échapper les valeurs et créer le format PostgreSQL
-                    $escaped = array_map(function($val) {
-                        // Échapper les guillemets et backslashes pour PostgreSQL
-                        $val = str_replace('\\', '\\\\', $val);
-                        $val = str_replace('"', '\\"', $val);
-                        return '"' . $val . '"';
-                    }, $imagesValue);
-                    $product->setAttribute('images', '{' . implode(',', $escaped) . '}');
+            // Forcer has_promotion à être un boolean pour PostgreSQL
+            if (array_key_exists('has_promotion', $product->getAttributes())) {
+                $hasPromotionValue = $product->getAttributes()['has_promotion'];
+                // Convertir en boolean strict
+                if (is_string($hasPromotionValue)) {
+                    $hasPromotionValue = in_array(strtolower($hasPromotionValue), ['1', 'true', 'on', 'yes']);
+                } elseif (is_int($hasPromotionValue)) {
+                    $hasPromotionValue = (bool) $hasPromotionValue;
+                } elseif (!is_bool($hasPromotionValue)) {
+                    $hasPromotionValue = (bool) $hasPromotionValue;
                 }
-            } elseif (empty($imagesValue) || $imagesValue === '[]' || $imagesValue === 'null' || $imagesValue === null) {
-                $product->setAttribute('images', '{}');
-            } elseif (is_string($imagesValue) && strpos($imagesValue, '{') !== 0) {
-                // Si c'est une chaîne qui n'est pas déjà au format PostgreSQL, la convertir
-                // (ne devrait pas arriver, mais au cas où)
-                $product->setAttribute('images', $imagesValue);
+                $product->setAttribute('has_promotion', $hasPromotionValue);
             }
         });
     }

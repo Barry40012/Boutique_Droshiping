@@ -4,6 +4,76 @@
 
 @section('content')
 <style>
+.merchant-create-store-container {
+    max-width: 100%;
+    width: 100%;
+    padding: 2rem;
+}
+
+.create-store-card {
+    max-width: 100%;
+    width: 100%;
+}
+
+.create-store-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.form-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.form-section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-section-two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .form-section-two-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.margin-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.margin-percentage {
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    background: #f3f4f6;
+    border-radius: 8px;
+    min-width: 80px;
+    text-align: center;
+}
+
 .image-counter {
     font-size: 0.9em;
     font-weight: 600;
@@ -55,6 +125,36 @@
     background: #ef4444;
     transform: scale(1.1);
 }
+
+#promotion_fields {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+#promotion_fields .form-group {
+    margin-bottom: 1rem;
+}
+
+#promotion_fields .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.char-counter {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-left: 0.5rem;
+    float: right;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 </style>
 <div class="merchant-create-store-container">
     <div class="create-store-card" data-aos="fade-up">
@@ -100,10 +200,37 @@
                     <i class="fas fa-info-circle icon-inline"></i>
                     Informations
                 </h2>
-                <div class="form-group">
-                    <label class="form-label">Nom</label>
-                    <input type="text" name="name" class="form-input @error('name') error @enderror" value="{{ old('name') }}" required>
-                    @error('name') <div class="form-error">{{ $message }}</div> @enderror
+                <div class="form-section-two-columns">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Nom du produit
+                            <span class="char-counter" id="nameCharCounter">0/100</span>
+                        </label>
+                        <input type="text" 
+                               name="name" 
+                               id="product_name"
+                               class="form-input @error('name') error @enderror" 
+                               value="{{ old('name') }}" 
+                               maxlength="100"
+                               required
+                               oninput="updateCharCounter('product_name', 'nameCharCounter', 100)">
+                        @error('name') <div class="form-error">{{ $message }}</div> @enderror
+                        <div class="form-hint" style="margin-top: 0.25rem; font-size: 0.875rem; color: #6b7280;">
+                            <i class="fas fa-info-circle icon-inline"></i>
+                            Maximum 100 caractères
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-toggle-on icon-inline"></i>
+                            Statut
+                        </label>
+                        <select name="status" class="form-input @error('status') error @enderror" required>
+                            <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Actif</option>
+                            <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactif</option>
+                        </select>
+                        @error('status') <div class="form-error">{{ $message }}</div> @enderror
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">
@@ -112,7 +239,7 @@
                     </label>
                     <textarea name="description" 
                               id="product-description" 
-                              rows="8" 
+                              rows="6" 
                               class="form-textarea @error('description') error @enderror" 
                               placeholder="Décrivez votre produit en détail...">{{ old('description') }}</textarea>
                     <div class="form-hint">
@@ -243,11 +370,11 @@
             <div class="form-section">
                 <h2 class="section-title">
                     <i class="fas fa-image icon-inline"></i>
-                    Images <span id="imageCounter" class="image-counter">(0/4)</span>
+                    Images <span id="imageCounter" class="image-counter">(0/6)</span>
                 </h2>
                 <p class="form-hint" style="margin-bottom: 20px;">
                     <i class="fas fa-info-circle icon-inline"></i>
-                    Vous pouvez utiliser les deux options : uploader des fichiers ET/OU ajouter des URLs. Maximum 4 images au total.
+                    Vous pouvez utiliser les deux options : uploader des fichiers ET/OU ajouter des URLs. Maximum 6 images au total.
                 </p>
                 
                 <!-- Upload de fichiers -->
@@ -304,17 +431,129 @@
 
             <div class="form-section">
                 <h2 class="section-title">
-                    <i class="fas fa-toggle-on icon-inline"></i>
-                    Statut
+                    <i class="fas fa-palette icon-inline"></i>
+                    Variantes du produit (optionnel)
                 </h2>
+                <p class="form-hint" style="margin-bottom: 20px;">
+                    <i class="fas fa-info-circle icon-inline"></i>
+                    Ajoutez les variantes disponibles pour ce produit (taille, couleur, longueur, etc.). Laissez vide si le produit n'a pas de variantes.
+                </p>
+                
                 <div class="form-group">
-                    <select name="status" class="form-input @error('status') error @enderror" required>
-                        <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Actif</option>
-                        <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactif</option>
-                    </select>
-                    @error('status') <div class="form-error">{{ $message }}</div> @enderror
+                    <label class="form-label">
+                        <i class="fas fa-ruler icon-inline"></i>
+                        Tailles disponibles (séparées par des virgules)
+                    </label>
+                    <input type="text"
+                           name="variant_sizes"
+                           id="variant_sizes"
+                           class="form-input @error('variant_sizes') error @enderror"
+                           value="{{ old('variant_sizes') }}"
+                           placeholder="Ex: S, M, L, XL ou 38, 39, 40, 41">
+                    @error('variant_sizes') <div class="form-error">{{ $message }}</div> @enderror
+                    <p class="form-hint">Laissez vide si le produit n'a pas de tailles</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-paint-brush icon-inline"></i>
+                        Couleurs disponibles (séparées par des virgules)
+                    </label>
+                    <input type="text"
+                           name="variant_colors"
+                           id="variant_colors"
+                           class="form-input @error('variant_colors') error @enderror"
+                           value="{{ old('variant_colors') }}"
+                           placeholder="Ex: Rouge, Bleu, Vert, Noir">
+                    @error('variant_colors') <div class="form-error">{{ $message }}</div> @enderror
+                    <p class="form-hint">Laissez vide si le produit n'a qu'une seule couleur</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-ruler-vertical icon-inline"></i>
+                        Longueurs/Mesures disponibles (séparées par des virgules)
+                    </label>
+                    <input type="text"
+                           name="variant_lengths"
+                           id="variant_lengths"
+                           class="form-input @error('variant_lengths') error @enderror"
+                           value="{{ old('variant_lengths') }}"
+                           placeholder="Ex: 1 mètre, 2 mètres, 3 mètres">
+                    @error('variant_lengths') <div class="form-error">{{ $message }}</div> @enderror
+                    <p class="form-hint">Laissez vide si le produit n'a pas de variantes de longueur</p>
                 </div>
             </div>
+
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-tag icon-inline"></i>
+                    Promotion (optionnel)
+                </h2>
+                <div class="form-group">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox"
+                               name="has_promotion"
+                               id="has_promotion"
+                               value="1"
+                               {{ old('has_promotion') ? 'checked' : '' }}
+                               onchange="togglePromotionFields()">
+                        <span>Activer une promotion pour ce produit</span>
+                    </label>
+                </div>
+
+                <div id="promotion_fields" style="display: {{ old('has_promotion') ? 'block' : 'none' }};">
+                    <div class="form-section-two-columns">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-percent icon-inline"></i>
+                                Pourcentage de réduction (%)
+                            </label>
+                            <input type="number"
+                                   step="0.1"
+                                   min="1"
+                                   max="99"
+                                   name="promo_percentage"
+                                   id="promo_percentage"
+                                   class="form-input @error('promo_percentage') error @enderror"
+                                   value="{{ old('promo_percentage') }}"
+                                   placeholder="Ex: 10"
+                                   oninput="calculatePromoPrice()">
+                            @error('promo_percentage') <div class="form-error">{{ $message }}</div> @enderror
+                            <p class="form-hint">Le pourcentage de réduction (ex: 10 pour 10% de réduction)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-calendar-alt icon-inline"></i>
+                                Durée de la promotion (en jours)
+                            </label>
+                            <input type="number"
+                                   min="1"
+                                   name="promo_duration_days"
+                                   id="promo_duration_days"
+                                   class="form-input @error('promo_duration_days') error @enderror"
+                                   value="{{ old('promo_duration_days', 7) }}"
+                                   placeholder="Ex: 7">
+                            @error('promo_duration_days') <div class="form-error">{{ $message }}</div> @enderror
+                            <p class="form-hint">La promotion commencera dès l'activation et durera le nombre de jours indiqué</p>
+                        </div>
+                    </div>
+                    
+                    <div class="promo-preview" id="promoPreview" style="margin-top: 1rem; padding: 1rem; background: #f0fdf4; border-radius: 8px; display: none; border: 1px solid #86efac;">
+                        <small style="color: #166534; font-size: 0.95rem;">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Aperçu de la promotion :</strong> Prix original: <span id="originalPriceDisplay">$0.00</span> → 
+                            Prix promo: <strong id="promoPriceDisplay">$0.00</strong> 
+                            (<span id="savingsDisplay">$0.00</span> d'économie)
+                        </small>
+                    </div>
+                    
+                    <!-- Champ caché pour le prix promo calculé -->
+                    <input type="hidden" name="promo_price" id="promo_price_calculated" value="">
+                </div>
+            </div>
+
 
             <div class="form-actions">
                 <a href="{{ route('merchant.products') }}" class="btn-secondary">
@@ -363,10 +602,10 @@ imageFilesInput.addEventListener('change', (e) => {
 
 function handleFiles(files) {
     const totalImages = uploadedImages.length + countImageUrls();
-    const remainingSlots = 4 - totalImages;
+    const remainingSlots = 6 - totalImages;
     
     if (remainingSlots <= 0) {
-        alert('Vous avez déjà atteint la limite de 4 images (fichiers + URLs). Supprimez-en d\'abord.');
+        alert('Vous avez déjà atteint la limite de 6 images (fichiers + URLs). Supprimez-en d\'abord.');
         return;
     }
     
@@ -441,9 +680,9 @@ function updateImageCounters() {
         urlCountBadge.textContent = `(${urlCount} URL${urlCount > 1 ? 's' : ''})`;
     }
     if (totalCounter) {
-        totalCounter.textContent = `(${totalCount}/4)`;
+        totalCounter.textContent = `(${totalCount}/6)`;
         // Changer la couleur selon le nombre
-        if (totalCount >= 4) {
+        if (totalCount >= 6) {
             totalCounter.style.color = '#ef4444';
         } else if (totalCount >= 3) {
             totalCounter.style.color = '#f59e0b';
@@ -468,16 +707,16 @@ if (imageUrlsTextarea) {
     imageUrlsTextarea.addEventListener('input', function() {
         updateImageCounters();
         
-        // Valider que le total ne dépasse pas 4
+        // Valider que le total ne dépasse pas 6
         const totalCount = uploadedImages.length + countImageUrls();
-        if (totalCount > 4) {
+        if (totalCount > 6) {
             this.style.borderColor = '#ef4444';
             const errorMsg = document.getElementById('urlCountError');
             if (!errorMsg) {
                 const error = document.createElement('div');
                 error.id = 'urlCountError';
                 error.className = 'form-error';
-                error.textContent = `Vous avez ${totalCount} images au total. Maximum 4 autorisées.`;
+                error.textContent = `Vous avez ${totalCount} images au total. Maximum 6 autorisées.`;
                 this.parentNode.insertBefore(error, this.nextSibling);
             }
         } else {
@@ -524,10 +763,10 @@ if (form) {
     form.addEventListener('submit', function(e) {
         const totalImages = uploadedImages.length + countImageUrls();
         
-        // Vérifier que le total ne dépasse pas 4
-        if (totalImages > 4) {
+        // Vérifier que le total ne dépasse pas 6
+        if (totalImages > 6) {
             e.preventDefault();
-            alert(`Vous avez ${totalImages} images au total. Le maximum autorisé est de 4 images (fichiers + URLs). Veuillez en supprimer ${totalImages - 4}.`);
+            alert(`Vous avez ${totalImages} images au total. Le maximum autorisé est de 6 images (fichiers + URLs). Veuillez en supprimer ${totalImages - 6}.`);
             return false;
         }
         
@@ -570,6 +809,92 @@ document.addEventListener('DOMContentLoaded', function() {
 // Calculer la marge au chargement si des valeurs existent
 document.addEventListener('DOMContentLoaded', function() {
     calculateMargin();
+});
+
+function togglePromotionFields() {
+    const checkbox = document.getElementById('has_promotion');
+    const fields = document.getElementById('promotion_fields');
+    if (checkbox && fields) {
+        fields.style.display = checkbox.checked ? 'block' : 'none';
+        if (!checkbox.checked) {
+            // Réinitialiser les champs si la promotion est désactivée
+            const promoPercentage = document.getElementById('promo_percentage');
+            const promoDuration = document.getElementById('promo_duration_days');
+            if (promoPercentage) promoPercentage.value = '';
+            if (promoDuration) promoDuration.value = '7';
+            document.getElementById('promoPreview').style.display = 'none';
+        } else {
+            calculatePromoPrice();
+        }
+    }
+}
+
+function calculatePromoPrice() {
+    const sellingPrice = parseFloat(document.getElementById('selling_price')?.value || 0);
+    const promoPercentage = parseFloat(document.getElementById('promo_percentage')?.value || 0);
+    const promoPreview = document.getElementById('promoPreview');
+    const originalPriceDisplay = document.getElementById('originalPriceDisplay');
+    const promoPriceDisplay = document.getElementById('promoPriceDisplay');
+    const savingsDisplay = document.getElementById('savingsDisplay');
+    const promoPriceCalculated = document.getElementById('promo_price_calculated');
+    
+    if (sellingPrice > 0 && promoPercentage > 0 && promoPercentage <= 99) {
+        const discount = (sellingPrice * promoPercentage) / 100;
+        const promoPrice = sellingPrice - discount;
+        
+        if (promoPriceCalculated) {
+            promoPriceCalculated.value = promoPrice.toFixed(2);
+        }
+        
+        if (promoPreview && originalPriceDisplay && promoPriceDisplay && savingsDisplay) {
+            originalPriceDisplay.textContent = '$' + sellingPrice.toFixed(2);
+            promoPriceDisplay.textContent = '$' + promoPrice.toFixed(2);
+            savingsDisplay.textContent = '$' + discount.toFixed(2);
+            promoPreview.style.display = 'block';
+        }
+    } else {
+        if (promoPreview) promoPreview.style.display = 'none';
+        if (promoPriceCalculated) promoPriceCalculated.value = '';
+    }
+}
+
+// Écouter les changements du prix de vente pour recalculer la promo
+document.addEventListener('DOMContentLoaded', function() {
+    const sellingPriceInput = document.getElementById('selling_price');
+    if (sellingPriceInput) {
+        sellingPriceInput.addEventListener('input', function() {
+            if (document.getElementById('has_promotion')?.checked) {
+                calculatePromoPrice();
+            }
+        });
+    }
+});
+
+// Fonction pour le compteur de caractères
+function updateCharCounter(inputId, counterId, maxLength) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (input && counter) {
+        const currentLength = input.value.length;
+        counter.textContent = currentLength + '/' + maxLength;
+        
+        // Changer la couleur si on approche de la limite
+        if (currentLength > maxLength * 0.9) {
+            counter.style.color = '#ef4444';
+        } else if (currentLength > maxLength * 0.75) {
+            counter.style.color = '#f59e0b';
+        } else {
+            counter.style.color = '#6b7280';
+        }
+    }
+}
+
+// Initialiser le compteur au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('product_name');
+    if (nameInput) {
+        updateCharCounter('product_name', 'nameCharCounter', 100);
+    }
 });
 </script>
 @endsection

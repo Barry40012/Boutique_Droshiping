@@ -40,17 +40,61 @@ class Store extends Model
             // Boutons
             'button_text',
             'button_animation',
+            'button_bg_color',
+            'button_text_color',
             'show_buy_button_on_card',
             // Organisation page
             'product_layout',
             'product_image_display',
             'products_per_row',
+            'allow_multiple_products',
+            'featured_product_id',
+            // Personnalisation bannière
+            'banner_title_color',
+            'banner_title_animation',
+            'banner_title_size',
+            'banner_text_color',
+            'banner_text_animation',
+            'banner_text_font',
+            'banner_text_size',
+            'banner_text_speed',
+            'banner_button_text',
+            'banner_button_color',
+            'banner_button_bg_color',
+            'banner_button_text_color',
+            // Personnalisation header
+            'header_bg_color',
+            'header_text_color',
+            'header_name_color',
+            'header_name_font',
+            // Personnalisation footer
+            'footer_bg_color',
+            'footer_text_color',
+            'footer_link_color',
+            'footer_title_color',
+            // Hover / fond de page
+            'header_nav_hover_color',
+            'page_bg_color',
+            // Sections produit / avis
+            'product_section_bg_color',
+            'product_section_rounded',
+            'reviews_section_bg_color',
+            'reviews_section_rounded',
+            // Nouvelles fonctionnalités
+            'language',
+            'why_choose_product',
+            'product_banner_steps',
         ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'settings' => 'array',
+        'product_banner_steps' => 'array',
+        'product_section_rounded' => 'boolean',
+        'reviews_section_rounded' => 'boolean',
+        'allow_multiple_products' => 'boolean',
     ];
+
 
     // S'assurer que is_active est toujours traité comme boolean dans les requêtes
     // NOTE: On ne met PAS is_active dans $attributes pour éviter que Laravel l'insère automatiquement

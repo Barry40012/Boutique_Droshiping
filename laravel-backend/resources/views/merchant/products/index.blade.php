@@ -169,11 +169,74 @@
 </div>
 
 <style>
+/* Surcharger le container du layout pour utiliser toute la largeur */
+main.container.main {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 20px !important;
+}
+
+.merchant-dashboard-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.products-filters {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.filters-form {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.filter-input,
+.filter-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
     margin-top: 30px;
+    width: 100%;
 }
 
 .product-card {
@@ -370,9 +433,44 @@
     color: #991b1b;
 }
 
+/* Responsive pour tablettes */
+@media (max-width: 1200px) {
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filters-form {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-actions {
+        width: 100%;
+    }
+    
+    .filter-actions button,
+    .filter-actions a {
+        flex: 1;
+    }
+}
+
 @media (max-width: 768px) {
+    .merchant-dashboard-container {
+        padding: 0 15px;
+    }
+    
     .products-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
     
     .product-card-prices {
